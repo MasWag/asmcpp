@@ -166,6 +166,7 @@ EOF
 #+BEGIN_SRC sh
 cat "$ASPECT_TMP"
 ag++ "$input_file" -p "$(dirname $input_file)" --keep_woven --weave_only -o "$output_file"
+rm "$ASPECT_TMP"
 #+END_SRC
 
 ** Templates

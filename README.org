@@ -5,6 +5,10 @@
 ** aspectc++
 
 #+BEGIN_SRC sh
+apt install make aspectc++ -y
+#+END_SRC
+
+#+BEGIN_SRC sh
 pacaur -S aspectc++-bin --noconfirm
 #+END_SRC
 
