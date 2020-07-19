@@ -1,0 +1,23 @@
+name: fibonacci
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    container: ubuntu:focal
+    strategy:
+      max-parallel: 4
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: install Aspect C++
+      run: |
+        apt-get update
+        apt-get install make aspectc++ -y
+    - name: Build and run fibonacci
+      run: |
+        cd examples/fibonacci
+        make
+        ./fibonacci_monitored 10

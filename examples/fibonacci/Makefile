@@ -1,10 +1,10 @@
-all: finobacci finobacci_monitored
+all: fibonacci fibonacci_monitored
 
 %_monitored.cc: %.cc ../../src/asmc++
 	../../src/asmc++ $< -c asm.conf -o $@
 
-finobacci: fibonacci.cc
+fibonacci: fibonacci.cc
 	g++ $< -o $@
 
-finobacci_monitored: fibonacci_monitored.cc
+fibonacci_monitored: fibonacci_monitored.cc
 	g++ $< -o $@
