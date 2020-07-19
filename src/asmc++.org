@@ -1,0 +1,192 @@
+* A Simple Monitor for C++ (ASMC++)
+
+#+BEGIN_SRC sh :tangle asmc++ :noweb yes :shebang #!/bin/sh
+
+  <<CHECK_ASPECT_C>>
+
+  <<CHECK_ARGS>>
+
+  # Generate the Aspect C++ code
+  ASPECT_TMP=$(mktemp "$(dirname "$input_file")"/"$input_file".XXXXXX.ah)
+  <<GENERATE_HEADER>>
+  <<GENERATE_BODY>>
+  <<GENERATE_FOOTER>>
+
+  # weave monitor
+  <<WEAVE_MONITOR>>
+#+END_SRC
+
+** Usage
+  :PROPERTIES:
+  :header-args: :noweb-ref USAGE_TEXT
+  :END:
+
+#+BEGIN_SRC text
+Usage: asmc++ [MONITORED_FILE] -c [CONF_FILE] -o [OUTPUT_FILE]
+Example: asmc++ sample.cc -c sample.conf -o sample_monitored.cc
+#+END_SRC
+
+** Check the arguments
+  :PROPERTIES:
+  :header-args: :noweb-ref CHECK_ARGS
+  :END:
+
+#+BEGIN_SRC sh :noweb yes
+  if [ $# -lt 5 ]; then
+      echo "Error: not sufficient arguments" > /dev/stderr
+      cat <<EOF > /dev/stderr 
+  <<USAGE_TEXT>>
+  EOF
+      exit 1
+  elif [ "$2" != "-c" ] || [ "$4" != "-o" ]; then
+      echo "Error: invalid usage" > /dev/stderr
+      cat <<EOF > /dev/stderr 
+  <<USAGE_TEXT>>
+  EOF
+      exit 1
+  fi
+  input_file=$1
+  conf_file=$3
+  output_file=$5
+#+END_SRC
+
+** Check the existence of Aspect C++
+  :PROPERTIES:
+  :header-args: :noweb-ref CHECK_ASPECT_C
+  :END:
+
+Then, we check if Aspect C++ is installed.
+
+#+BEGIN_SRC sh
+  if ! command -v ag++ > /dev/null; then
+      echo "asm.C++ Error: ag++ is not found." > /dev/stderr 
+      echo "asm.C++ Error: asm.C++ requires that ag++ is installed under a pathed directory." > /dev/stderr 
+      exit 1
+  fi
+  AG=$(command -v ag++)
+#+END_SRC
+
+#+RESULTS:
+: /usr/bin/ag++
+
+** Generate Header
+  :PROPERTIES:
+  :header-args: :noweb-ref GENERATE_HEADER
+  :END:
+
+#+BEGIN_SRC sh :noweb yes
+cat <<EOF > "$ASPECT_TMP"
+<<HEADER>>
+EOF
+#+END_SRC
+
+** Generate Footer
+  :PROPERTIES:
+  :header-args: :noweb-ref GENERATE_FOOTER
+  :END:
+
+#+BEGIN_SRC sh :noweb yes
+cat <<EOF >> "$ASPECT_TMP"
+<<FOOTER>>
+EOF
+#+END_SRC
+
+** Generate Body
+  :PROPERTIES:
+  :header-args: :noweb-ref GENERATE_BODY
+  :END:
+
+#+BEGIN_SRC sh :results output :noweb yes
+  TMP=$(mktemp /tmp/asmc++.XXXXXX.awk)
+  cat << 'EOF' >> "$TMP" 
+  <<GENERATE_AWK>>
+  EOF
+
+  chmod +x "$TMP"
+  awk -f "$TMP" < "$conf_file" >> "$ASPECT_TMP"
+  rm "$TMP"
+#+END_SRC
+
+#+RESULTS:
+
+*** Generate awk part
+  :PROPERTIES:
+  :header-args: :noweb-ref GENERATE_AWK
+  :END:
+
+#+BEGIN_SRC awk :shebang #!/usr/bin/awk -f :tangle generate_aspect.awk
+  BEGIN {
+    FS = ",";
+  }
+  { 
+      name = $1;
+      for (i = 2; i <= NF; i++) {
+          match($i, /[^ ]*$/);
+          args[i] = substr($i, RSTART, RLENGTH);
+      }
+  }
+  {
+      printf "  advice execution(\"%% %s(...)\")", name;
+  }
+  NF > 1 {
+      printf " && args(";
+      for (i = 2; i <= NF; i++) {
+          printf "%s",args[i];
+          if (i < NF) {
+              printf ", "
+          }
+      }
+      printf ")" 
+  }
+  {
+      printf " : before (";
+      for (i = 2; i <= NF; i++) {
+          printf "%s",$i;
+          if (i < NF) {
+              printf ", "
+          }
+      }
+      printf ") {\n" 
+  }
+  {
+      printf "    std::cout << \"ASM: %s \"", name;
+      for (i = 2; i <= NF; i++) {
+          printf " << \", %s: \" << %s", args[i], args[i];
+      }
+      printf " << std::endl;\n  }\n\n" 
+  }
+#+END_SRC
+
+
+** Weave the monitored file
+   :PROPERTIES:
+   :header-args: :noweb-ref WEAVE_MONITOR
+   :END:
+
+#+BEGIN_SRC sh
+cat "$ASPECT_TMP"
+ag++ "$input_file" -p "$(dirname $input_file)" --keep_woven --weave_only -o "$output_file"
+#+END_SRC
+
+** Templates
+
+*** Header
+   :PROPERTIES:
+   :header-args: :noweb-ref HEADER
+   :END:
+
+#+BEGIN_SRC c++
+#include <iostream>
+
+aspect ASM {
+#+END_SRC
+
+*** Footer
+  :PROPERTIES:
+  :header-args: :noweb-ref FOOTER
+  :END:
+
+
+#+BEGIN_SRC c++
+};
+#+END_SRC

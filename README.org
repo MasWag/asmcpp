@@ -1,0 +1,15 @@
+* asm c++
+
+* Requirements
+
+** aspectc++
+
+#+BEGIN_SRC sh
+pacaur -S aspectc++-bin --noconfirm
+#+END_SRC
+
+* TODO Usage
+
+* Materials
+
+** [[https://ess.cs.tu-dortmund.de/Teaching/SS2018/SuS/Downloads/ac-tutorial.pdf][Tutorial of AspectC++]]
