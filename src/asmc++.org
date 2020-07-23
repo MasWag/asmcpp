@@ -1,4 +1,6 @@
-* A Simple Monitor for C++ (ASMC++)
+* A Simple Monitor for C++ (asm.c++)
+
+This document shows the source code of asm.c++. The following shows the outline of the code.
 
 #+BEGIN_SRC sh :tangle asmc++ :noweb yes :shebang #!/bin/sh
 
@@ -21,6 +23,8 @@
   :header-args: :noweb-ref USAGE_TEXT
   :END:
 
+The usage of asm.c++ is as follows. We note that in the current version, the order of the arguments is fixed.
+
 #+BEGIN_SRC text
 Usage: asmc++ [MONITORED_FILE] -c [CONF_FILE] -o [OUTPUT_FILE]
 Example: asmc++ sample.cc -c sample.conf -o sample_monitored.cc
@@ -31,6 +35,10 @@ Example: asmc++ sample.cc -c sample.conf -o sample_monitored.cc
   :header-args: :noweb-ref CHECK_ARGS
   :END:
 
+First, we check the arguments.
+
+The number of the arguments must be at least 5.
+
 #+BEGIN_SRC sh :noweb yes
   if [ $# -lt 5 ]; then
       echo "Error: not sufficient arguments" > /dev/stderr
@@ -38,6 +46,11 @@ Example: asmc++ sample.cc -c sample.conf -o sample_monitored.cc
   <<USAGE_TEXT>>
   EOF
       exit 1
+#+END_SRC
+
+Moreover, the second and forth arguments must be =-c= and =-o=, respectively.
+
+#+BEGIN_SRC sh :noweb yes
   elif [ "$2" != "-c" ] || [ "$4" != "-o" ]; then
       echo "Error: invalid usage" > /dev/stderr
       cat <<EOF > /dev/stderr 
@@ -45,6 +58,11 @@ Example: asmc++ sample.cc -c sample.conf -o sample_monitored.cc
   EOF
       exit 1
   fi
+#+END_SRC
+
+When the arguments are given correctly, we assign the arguments to the corresponding variables.
+
+#+BEGIN_SRC sh :noweb yes
   input_file=$1
   conf_file=$3
   output_file=$5
@@ -69,32 +87,34 @@ Then, we check if Aspect C++ is installed.
 #+RESULTS:
 : /usr/bin/ag++
 
-** Generate Header
-  :PROPERTIES:
-  :header-args: :noweb-ref GENERATE_HEADER
-  :END:
+** Monitor generation
 
+Then, we generate the Aspect C++ code.
+
+*** Generate the header and footer
+
+For the header and the footer, since the result is fixed, we simply insert the fixed texts.
+
+#+NAME: GENERATE_HEADER
 #+BEGIN_SRC sh :noweb yes
 cat <<EOF > "$ASPECT_TMP"
 <<HEADER>>
 EOF
 #+END_SRC
 
-** Generate Footer
-  :PROPERTIES:
-  :header-args: :noweb-ref GENERATE_FOOTER
-  :END:
-
+#+NAME: GENERATE_FOOTER
 #+BEGIN_SRC sh :noweb yes
 cat <<EOF >> "$ASPECT_TMP"
 <<FOOTER>>
 EOF
 #+END_SRC
 
-** Generate Body
+*** Generate the body
   :PROPERTIES:
   :header-args: :noweb-ref GENERATE_BODY
   :END:
+
+Then, we generate the main part of the Aspect C++ code. The generation is done by the AWK code.
 
 #+BEGIN_SRC sh :results output :noweb yes
   TMP=$(mktemp /tmp/asmc++.XXXXXX.awk)
@@ -109,15 +129,28 @@ EOF
 
 #+RESULTS:
 
-*** Generate awk part
+**** AWK code for the Aspect C++ code generation
   :PROPERTIES:
   :header-args: :noweb-ref GENERATE_AWK
   :END:
 
-#+BEGIN_SRC awk :shebang #!/usr/bin/awk -f :tangle generate_aspect.awk
+The following shows the AWK code to generate the body of the Aspect C++ code from the input configuration file.
+
+Since the entries in the input configuration file are separated by ",", we let the field separator ",".
+
+#+BEGIN_SRC awk
   BEGIN {
     FS = ",";
   }
+#+END_SRC
+
+In this AWK script, we have two variables: =name= and =args=.
+=name= is a string showing the name of the monitored function and =args= is an array containing the arguments of the monitored function without the types.
+We read the input configuration file and assign these variables. 
+The first field is the name of the monitored function.
+For the remaining fields, we assign the longest suffix not containing the space to the array =args=.
+
+#+BEGIN_SRC awk
   { 
       name = $1;
       for (i = 2; i <= NF; i++) {
@@ -125,9 +158,19 @@ EOF
           args[i] = substr($i, RSTART, RLENGTH);
       }
   }
+#+END_SRC
+
+From here, we output the body of the Aspect C++ code. First, we generate the beginning of the advice declaration.
+
+#+BEGIN_SRC awk
   {
       printf "  advice execution(\"%% %s(...)\")", name;
   }
+#+END_SRC
+
+Since we read the arguments, we check the type of the arguments when the monitored function gets arguments.
+
+#+BEGIN_SRC awk
   NF > 1 {
       printf " && args(";
       for (i = 2; i <= NF; i++) {
@@ -138,6 +181,11 @@ EOF
       }
       printf ")" 
   }
+#+END_SRC
+
+Then, we capture the arguments of the monitored function.
+
+#+BEGIN_SRC awk
   {
       printf " : before (";
       for (i = 2; i <= NF; i++) {
@@ -148,6 +196,11 @@ EOF
       }
       printf ") {\n" 
   }
+#+END_SRC
+
+Finally, we print the arguments of the monitored function.
+
+#+BEGIN_SRC awk
   {
       printf "    std::cout << \"ASM: %s \"", name;
       for (i = 2; i <= NF; i++) {
@@ -163,6 +216,8 @@ EOF
    :header-args: :noweb-ref WEAVE_MONITOR
    :END:
 
+Then, we weave the monitored file by using the generated Aspect C++ code.
+
 #+BEGIN_SRC sh
 cat "$ASPECT_TMP"
 ag++ "$input_file" -p "$(dirname $input_file)" --keep_woven --weave_only -o "$output_file"
@@ -170,6 +225,8 @@ rm "$ASPECT_TMP"
 #+END_SRC
 
 ** Templates
+
+Here are the string constants for the header and the footer of the generated Aspect C++ code.
 
 *** Header
    :PROPERTIES:
