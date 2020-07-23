@@ -21,18 +21,18 @@ Example: asmc++ sample.cc -c sample.conf -o sample_monitored.cc
 
 ** Format of the configuration file
 
-The format of the configuration file is as follows. Each line shows the information of the monitored function. The first field of the comma-separated fields shows the name of the monitored function and the remaining fields show the arguments with the types.
+The format of the configuration file is as follows. Each line shows the information of the monitored function. The first field of the comma-separated fields shows the return type and the name of the monitored function and the remaining fields show the arguments with the types. We note that when the =[RETURN_TYPE]= is omitted, the monitor does not report anything after the function call. In order to report the return of the function call, please write void in the return type. When the input arguments are omitted, only the call of the function is reported.
 
 #+BEGIN_EXAMPLE
-[FUNCTION_NAME], [TYPE] [ARG_NAME], [TYPE] [ARG_NAME], ...
-[FUNCTION_NAME], [TYPE] [ARG_NAME], [TYPE] [ARG_NAME], ...
+([RETURN_TYPE]) [FUNCTION_NAME], [TYPE] [ARG_NAME], [TYPE] [ARG_NAME], ...
+([RETURN_TYPE]) [FUNCTION_NAME], [TYPE] [ARG_NAME], [TYPE] [ARG_NAME], ...
 ...
 #+END_EXAMPLE
 
 An example of the configuration file is as follows.
 
 #+BEGIN_SRC text :tangle ./examples/fibonacci/asm.conf
-fibonacci, int i
+int fibonacci, int i
 fibonacci_impl, int a, int b, int c
 #+END_SRC
 

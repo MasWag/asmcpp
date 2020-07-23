@@ -38,11 +38,23 @@ BEGIN {
   FS = ",";
 }
 { 
-    name = $1;
+    match($1, /[^ ]*$/);
+    return_type = substr($1, 1, RSTART-1);
+    name = substr($1, RSTART, RLENGTH);
     for (i = 2; i <= NF; i++) {
         match($i, /[^ ]*$/);
         args[i] = substr($i, RSTART, RLENGTH);
     }
+}
+length(return_type) && !match(return_type, /void/) {
+    printf "  advice execution(\"%% %s(...)\") && result(res) : after (%s res) {\n", name, return_type;
+    printf "    std::cout << \"ASM: %s\" << \", result: \" << res << std::endl;\n", name;
+    print "  }"
+}
+match(return_type, /void/) {
+    printf "  advice execution(\"%% %s(...)\") : after () {\n", name;
+    printf "    std::cout << \"ASM: %s\" << std::endl;\n", name;
+    print "  }"
 }
 {
     printf "  advice execution(\"%% %s(...)\")", name;
@@ -68,7 +80,7 @@ NF > 1 {
     printf ") {\n" 
 }
 {
-    printf "    std::cout << \"ASM: %s \"", name;
+    printf "    std::cout << \"ASM: %s\"", name;
     for (i = 2; i <= NF; i++) {
         printf " << \", %s: \" << %s", args[i], args[i];
     }
@@ -84,6 +96,5 @@ cat <<EOF >> "$ASPECT_TMP"
 EOF
 
 # weave monitor
-cat "$ASPECT_TMP"
 ag++ "$input_file" -p "$(dirname $input_file)" --keep_woven --weave_only -o "$output_file"
 rm "$ASPECT_TMP"

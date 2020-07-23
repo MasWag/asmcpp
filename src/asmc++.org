@@ -144,15 +144,19 @@ Since the entries in the input configuration file are separated by ",", we let t
   }
 #+END_SRC
 
-In this AWK script, we have two variables: =name= and =args=.
+In this AWK script, we have three variables: =return_type=, =name=, and =args=.
+=return_type= is a string showing the return type. This is set only when the return value is monitored.
 =name= is a string showing the name of the monitored function and =args= is an array containing the arguments of the monitored function without the types.
 We read the input configuration file and assign these variables. 
 The first field is the name of the monitored function.
 For the remaining fields, we assign the longest suffix not containing the space to the array =args=.
+This is set only when the arguments are monitored.
 
 #+BEGIN_SRC awk
   { 
-      name = $1;
+      match($1, /[^ ]*$/);
+      return_type = substr($1, 1, RSTART-1);
+      name = substr($1, RSTART, RLENGTH);
       for (i = 2; i <= NF; i++) {
           match($i, /[^ ]*$/);
           args[i] = substr($i, RSTART, RLENGTH);
@@ -160,7 +164,30 @@ For the remaining fields, we assign the longest suffix not containing the space 
   }
 #+END_SRC
 
-From here, we output the body of the Aspect C++ code. First, we generate the beginning of the advice declaration.
+From here, we output the body of the Aspect C++ code.
+
+The first advice is for monitoring of the result.
+
+#+BEGIN_SRC awk
+  length(return_type) && !match(return_type, /void/) {
+      printf "  advice execution(\"%% %s(...)\") && result(res) : after (%s res) {\n", name, return_type;
+      printf "    std::cout << \"ASM: %s\" << \", result: \" << res << std::endl;\n", name;
+      print "  }"
+  }
+#+END_SRC
+
+When the =return_type= contains "void", we only report the return of the function call without showing the returned value.
+
+#+BEGIN_SRC awk
+  match(return_type, /void/) {
+      printf "  advice execution(\"%% %s(...)\") : after () {\n", name;
+      printf "    std::cout << \"ASM: %s\" << std::endl;\n", name;
+      print "  }"
+  }
+#+END_SRC
+
+They, we generate the advice for monitoring the arguments.
+First, we generate the beginning of the advice declaration.
 
 #+BEGIN_SRC awk
   {
@@ -202,7 +229,7 @@ Finally, we print the arguments of the monitored function.
 
 #+BEGIN_SRC awk
   {
-      printf "    std::cout << \"ASM: %s \"", name;
+      printf "    std::cout << \"ASM: %s\"", name;
       for (i = 2; i <= NF; i++) {
           printf " << \", %s: \" << %s", args[i], args[i];
       }
@@ -219,7 +246,6 @@ Finally, we print the arguments of the monitored function.
 Then, we weave the monitored file by using the generated Aspect C++ code.
 
 #+BEGIN_SRC sh
-cat "$ASPECT_TMP"
 ag++ "$input_file" -p "$(dirname $input_file)" --keep_woven --weave_only -o "$output_file"
 rm "$ASPECT_TMP"
 #+END_SRC
