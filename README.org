@@ -1,6 +1,7 @@
 * asm.c++
 
 [[https://github.com/MasWag/asmcpp/workflows/fibonacci/badge.svg]]
+[[https://github.com/MasWag/asmcpp/workflows/static_analysis/badge.svg]]
 
 asm.c++ is a simple monitor generator for C++ programs. Given a configuration of the monitored functions, asm.c++ automatically inject the monitoring function using [[https://www.aspectc.org/][Aspect C++]].
 
