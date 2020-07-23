@@ -246,7 +246,7 @@ Finally, we print the arguments of the monitored function.
 Then, we weave the monitored file by using the generated Aspect C++ code.
 
 #+BEGIN_SRC sh
-ag++ "$input_file" -p "$(dirname $input_file)" --keep_woven --weave_only -o "$output_file"
+$AG "$input_file" -p "$(dirname "$input_file")" --keep_woven --weave_only -o "$output_file"
 rm "$ASPECT_TMP"
 #+END_SRC
 

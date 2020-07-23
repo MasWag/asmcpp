@@ -96,5 +96,5 @@ cat <<EOF >> "$ASPECT_TMP"
 EOF
 
 # weave monitor
-ag++ "$input_file" -p "$(dirname $input_file)" --keep_woven --weave_only -o "$output_file"
+$AG "$input_file" -p "$(dirname "$input_file")" --keep_woven --weave_only -o "$output_file"
 rm "$ASPECT_TMP"
