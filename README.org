@@ -1,19 +1,24 @@
-* asm c++
+* asm.c++
 
-* Requirements
+[[https://github.com/MasWag/asmcpp/workflows/fibonacci/badge.svg]]
 
-** aspectc++
+asm.c++ is a simple monitor generator for C++ programs. Given a configuration of the monitored functions, asm.c++ automatically inject the monitoring function using [[https://www.aspectc.org/][Aspect C++]].
+
+** Requirements
+
+asm.c++ is based on Aspect C++. In Ubuntu, Aspect C++ can be installed by the following command. For the other environments, binary distribution of Aspect C++ is found at the [[https://www.aspectc.org/][official web page]].
 
 #+BEGIN_SRC sh
 apt install make aspectc++ -y
 #+END_SRC
 
-#+BEGIN_SRC sh
-pacaur -S aspectc++-bin --noconfirm
-#+END_SRC
+** Usage
 
-* TODO Usage
+#+BEGIN_EXAMPLE
+Usage: asmc++ [MONITORED_FILE] -c [CONF_FILE] -o [OUTPUT_FILE]
+Example: asmc++ sample.cc -c sample.conf -o sample_monitored.cc
+#+END_EXAMPLE
 
-* Materials
+** Materials
 
-** [[https://ess.cs.tu-dortmund.de/Teaching/SS2018/SuS/Downloads/ac-tutorial.pdf][Tutorial of AspectC++]]
+- [[https://ess.cs.tu-dortmund.de/Teaching/SS2018/SuS/Downloads/ac-tutorial.pdf][Tutorial of AspectC++]]
