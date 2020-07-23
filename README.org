@@ -19,6 +19,23 @@ Usage: asmc++ [MONITORED_FILE] -c [CONF_FILE] -o [OUTPUT_FILE]
 Example: asmc++ sample.cc -c sample.conf -o sample_monitored.cc
 #+END_EXAMPLE
 
+** Format of the configuration file
+
+The format of the configuration file is as follows. Each line shows the information of the monitored function. The first field of the comma-separated fields shows the name of the monitored function and the remaining fields show the arguments with the types.
+
+#+BEGIN_EXAMPLE
+[FUNCTION_NAME], [TYPE] [ARG_NAME], [TYPE] [ARG_NAME], ...
+[FUNCTION_NAME], [TYPE] [ARG_NAME], [TYPE] [ARG_NAME], ...
+...
+#+END_EXAMPLE
+
+An example of the configuration file is as follows.
+
+#+BEGIN_SRC text :tangle ./examples/fibonacci/asm.conf
+fibonacci, int i
+fibonacci_impl, int a, int b, int c
+#+END_SRC
+
 ** Materials
 
 - [[https://ess.cs.tu-dortmund.de/Teaching/SS2018/SuS/Downloads/ac-tutorial.pdf][Tutorial of AspectC++]]
